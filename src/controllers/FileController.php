@@ -28,6 +28,7 @@ use yii\web\UploadedFile;
 
 use League\Csv\Reader;
 use League\Csv\Writer;
+use League\Csv\Statement;
 
 /**
  * @author    nystudio107
@@ -115,9 +116,10 @@ class FileController extends Controller
         }
         // If we have headers, then we have a file, so parse it
         if ($headers !== null) {
-            $csv->setOffset(1);
+            $stmt = (new Statement())->offset(1);
             $columns = ArrayHelper::filterEmptyStringsFromArray($columns);
-            $csv->each(function ($row) use ($headers, $columns) {
+            $rows = $stmt->process($csv, $columns);
+            foreach ($rows as $row) {
                 $redirectConfig = [
                     'id' => 0,
                 ];
@@ -134,7 +136,7 @@ class FileController extends Controller
                 Retour::$plugin->redirects->saveRedirect($redirectConfig);
 
                 return true;
-            });
+            }
             @unlink($filename);
             Retour::$plugin->clearAllCaches();
             Craft::$app->getSession()->setNotice(Craft::t('retour', 'Redirects imported from CSV file.'));
